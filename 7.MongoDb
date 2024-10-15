@@ -1,0 +1,53 @@
+/*7. Los inspectores de la ciudad interactúan entre ellos utilizando una plataforma interna, en la misma
+a modo de chat comparten información referente a las inspecciones que vienen realizando, los
+establecimientos involucrados y los resultados de cada inspección. Se solicita al alumno crear una
+colección en MongoDB para poder mantener el histórico de conversaciones y luego hacer algunas
+consultas sobre dicho histórico, se pide como mínimo poder consultar:
+
+El formato de la colección, así como cada uno de los componentes es totalmente libre, el alumno
+debe construir la base de datos de MongoDB teniendo en cuenta que se puedan responder los 3
+puntos planteados. */
+
+use chat_inspecciones
+
+db.chat_inspecciones.insertMany([
+    {establecimiento: "McDonalds", inspeccion: {resultado: "Aprueba", riesgo: "Bajo"},tema:["Constancia"], mensaje: "Inspeccion realizada, la inspeccion quedo aprobada.Constancia"},
+    {establecimiento: "La Pasiva", inspeccion: {resultado: "Falla", riesgo: "Alto"},tema:["Violacion"], mensaje: "Inspeccion realizada, violacion C01 encontrada el estado del local es deplorable"},
+    {establecimiento: "La Tortuguita", inspeccion: {resultado: "Falla", riesgo: "Medio"},tema:["Violacion"], mensaje: "Inspeccion realizada, violacion encontrada, faltas graves de higiene"},
+    {establecimiento: "Bar18", inspeccion: {resultado: "Falla", riesgo: "Bajo"},tema:["Violacion"], mensaje: "Inspeccion realizada, violacion encontrada, gestion incorrecta de la materia prima"},
+    {establecimiento: "Plaza Chueca", inspeccion: {resultado: "Aprueba", riesgo: "Bajo"},tema:["Constancia"], mensaje: "Inspeccion realizada, todo OK"},
+    {establecimiento: "La Negra Tomasa", inspeccion: {resultado: "Falla", riesgo: "Bajo"},tema:["Violacion"], mensaje: "Inspeccion realizada, violacion encontrada, falta control regular de plagas"}
+    ])
+    
+    db.chat_inspecciones.insertMany([
+    {establecimiento: "McDonalds", inspeccion: {resultado: "Aprueba", riesgo: "Nulo"},tema:["Constancia"], mensaje: "Inspeccion realizada"},
+    {establecimiento: "La Pasiva", inspeccion: {resultado: "Aprueba", riesgo: "Nulo"},tema:["Constancia"], mensaje: "Inspeccion realizada"},
+    ])
+    
+    db.chat_inspecciones.insertMany([
+    {establecimiento: "McDonalds", inspeccion: {resultado: "Aprueba", riesgo: "Nulo"},tema:["Constancia"], mensaje: "Inspeccion realizada"},
+    {establecimiento: "McDonalds", inspeccion: {resultado: "Aprueba", riesgo: "Nulo"},tema:["Constancia"], mensaje: "Inspeccion realizada"},
+    ])
+    
+db.chat_inspecciones.find() //10 Registros
+
+
+//a. Cuantas conversaciones sobre violaciones diferentes se constataron.
+db.chat_inspecciones.countDocuments({tema: "Violacion" });
+
+//b. Obtener los mejores establecimientos basado en la cantidad de inspecciones aprobadas.
+
+//En el group by cuando indicamos el criterio de ordenacion hay que indicar explicitamente el campo con un $ en el match no porque sabe que te vas a referir a un campo de el documento
+//-1 Descendiente, 1 ascendente
+db.chat_inspecciones.aggregate([ {$match: {"inspeccion.resultado": "Aprueba"}}, {$group: {_id: "$establecimiento", "Total aprobadas": {$sum: 1}}, {$sort: {"Total aprobadas": -1}}   ])
+
+
+//c. Modificar una conversación agregando una etiqueta “IMPORTANTE” para todos aquellos chats que tengan referencia a resultados reprobados ('Falla').
+db.chat_inspecciones.updateMany(  {"inspeccion.resultado": "Falla"}, {$set: {"Etiqueta": "IMPORTANTE"}}  )
+
+db.chat_inspecciones.find({"Etiqueta":"IMPORTANTE"}) 
+
+
+
+
+    
